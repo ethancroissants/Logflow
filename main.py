@@ -12,6 +12,11 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from flask_cors import CORS
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
+from dotenv import load_dotenv
+
+# Load environment variables from a project-local .env file (if present) before
+# reading any os.environ below. Existing process env vars take precedence.
+load_dotenv()
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', os.urandom(24).hex())
@@ -62,6 +67,7 @@ class User(db.Model):
     username = db.Column(db.String(80), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
     password_hash = db.Column(db.String(200), nullable=False)
+    is_admin = db.Column(db.Boolean, nullable=False, default=False)
     created_at = db.Column(db.DateTime, default=datetime.datetime.utcnow)
     projects = db.relationship('Project', backref='owner', lazy=True)
     
@@ -220,7 +226,8 @@ def register():
         user = User(
             username=username,
             email=email,
-            password_hash=generate_password_hash(password)
+            password_hash=generate_password_hash(password),
+            is_admin=False
         )
         
         db.session.add(user)
